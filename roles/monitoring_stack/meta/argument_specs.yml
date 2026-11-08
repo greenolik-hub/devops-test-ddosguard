@@ -1,0 +1,71 @@
+---
+# monitoring_tunnel_limit_bps здесь намеренно нет: это не вход роли, а
+# значение, вычисляемое из traffic_control_rate для линии лимита на дашборде.
+argument_specs:
+  main:
+    short_description: Prometheus и Grafana в Docker Compose с provisioning datasource и дашборда
+    options:
+      # Общие параметры стенда из inventory/production/group_vars/all.yml.
+      gre_interface:
+        type: str
+        required: true
+        description: Туннельный интерфейс, график которого рисует дашборд (group_vars/all.yml).
+      traffic_control_rate:
+        type: str
+        required: true
+        description: >-
+          Лимит туннеля в синтаксисе tc: из него считается линия лимита на
+          дашборде (group_vars/all.yml).
+      node_exporter_port:
+        type: int
+        required: true
+        description: Порт, который Prometheus опрашивает на таргетах (group_vars/all.yml).
+
+      monitoring_data_dir:
+        type: path
+        default: /opt/monitoring
+        description: Каталог на хосте с конфигами, данными Prometheus и Grafana.
+      prometheus_image:
+        type: str
+        description: Образ Prometheus, версия закреплена в defaults роли.
+      grafana_image:
+        type: str
+        description: Образ Grafana, версия закреплена в defaults роли.
+      prometheus_port:
+        type: int
+        default: 9090
+        description: Порт Prometheus на хосте.
+      prometheus_bind_address:
+        type: str
+        default: 127.0.0.1
+        description: Адрес публикации Prometheus. По умолчанию только localhost.
+      grafana_port:
+        type: int
+        default: 3000
+        description: Порт Grafana на хосте.
+      grafana_bind_address:
+        type: str
+        default: 0.0.0.0
+        description: Адрес публикации Grafana. Задайте 127.0.0.1, чтобы закрыть её от LAN.
+      prometheus_node_exporter_group:
+        type: str
+        default: iperf_servers
+        description: Группа inventory, из которой генерируются таргеты node_exporter.
+      prometheus_container_uid:
+        type: str
+        default: "65534"
+        description: UID процесса Prometheus в образе — владелец каталога данных.
+      grafana_container_uid:
+        type: str
+        default: "472"
+        description: UID процесса Grafana в образе — владелец каталога данных.
+      grafana_admin_user:
+        type: str
+        default: grafana_admin
+        description: Логин администратора Grafana, не секретный.
+      grafana_admin_password:
+        type: str
+        no_log: true
+        description: >-
+          Пароль администратора Grafana, не короче 12 символов. Берётся из
+          Vault (vault_grafana_admin_password), без него роль останавливается.

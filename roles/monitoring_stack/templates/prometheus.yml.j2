@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - "localhost:9090"
+
+  # Таргеты генерируются из группы {{ prometheus_node_exporter_group }}.
+  # Метка host = имя хоста в inventory; по ней фильтрует дашборд Grafana.
+  - job_name: node_exporter
+    static_configs:
+{% for host in groups[prometheus_node_exporter_group] | default([]) %}
+      - targets:
+          - "{{ hostvars[host]['ansible_host'] | default(host) }}:{{ node_exporter_port }}"
+        labels:
+          host: "{{ host }}"
+{% else %}
+      - targets: []
+{% endfor %}

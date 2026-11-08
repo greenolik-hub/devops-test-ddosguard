@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+[Unit]
+Description=GRE Tunnel {{ gre_interface }}
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+
+ExecStart=/usr/local/sbin/configure-gre.sh
+ExecStop=-/usr/sbin/ip tunnel del {{ gre_interface }}
+
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

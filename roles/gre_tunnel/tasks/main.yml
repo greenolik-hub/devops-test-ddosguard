@@ -1,0 +1,38 @@
+---
+- name: Install iproute2
+  ansible.builtin.apt:
+    name: iproute2
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Deploy GRE configuration script
+  ansible.builtin.template:
+    src: configure-gre.sh.j2
+    dest: /usr/local/sbin/configure-gre.sh
+    owner: root
+    group: root
+    mode: "0750"
+  notify: Restart GRE tunnel
+
+- name: Deploy GRE systemd service
+  ansible.builtin.template:
+    src: gre-tunnel.service.j2
+    dest: /etc/systemd/system/gre-tunnel.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart GRE tunnel
+
+- name: Enable and start GRE tunnel
+  ansible.builtin.systemd:
+    name: gre-tunnel.service
+    enabled: true
+    state: started
+    daemon_reload: true
+
+# Рестарт туннеля пересоздаёт интерфейс. Выполняем его сразу, а не в конце
+# play, чтобы роли, настраивающие интерфейс дальше (traffic_control),
+# работали уже с итоговым интерфейсом.
+- name: Apply pending GRE tunnel restart
+  ansible.builtin.meta: flush_handlers

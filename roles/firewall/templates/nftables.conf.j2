@@ -1,0 +1,40 @@
+#!/usr/sbin/nft -f
+# {{ ansible_managed }}
+
+flush ruleset
+
+table inet filter {
+    chain input {
+        type filter hook input priority filter; policy drop;
+
+        ct state established,related accept
+        ct state invalid drop
+
+        iifname "lo" accept
+        meta l4proto { icmp, ipv6-icmp } accept
+
+        # SSH (управление через Ansible)
+        tcp dport {{ firewall_ssh_port }} accept
+{% if firewall_gre_peers | length > 0 %}
+
+        # GRE от второго конца туннеля
+        ip saddr { {{ firewall_gre_peers | join(', ') }} } ip protocol 47 accept
+{% endif %}
+
+        # iperf3: через туннель и напрямую по LAN
+        meta l4proto { tcp, udp } th dport {{ firewall_iperf3_port }} accept
+{% if firewall_node_exporter_sources | length > 0 %}
+
+        # node_exporter: только Prometheus
+        ip saddr { {{ firewall_node_exporter_sources | join(', ') }} } tcp dport {{ firewall_node_exporter_port }} accept
+{% endif %}
+    }
+
+    chain forward {
+        type filter hook forward priority filter; policy drop;
+    }
+
+    chain output {
+        type filter hook output priority filter; policy accept;
+    }
+}

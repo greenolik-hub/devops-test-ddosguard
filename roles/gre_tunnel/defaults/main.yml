@@ -1,0 +1,10 @@
+---
+# gre_interface задаётся в inventory/production/group_vars/all.yml.
+
+# Длина префикса адреса туннеля (gre_tunnel_ip задаётся в inventory).
+gre_prefix: 30
+
+gre_ttl: 255
+
+# 1500 (MTU underlay) - 20 (внешний IP-заголовок) - 4 (заголовок GRE).
+gre_mtu: 1476

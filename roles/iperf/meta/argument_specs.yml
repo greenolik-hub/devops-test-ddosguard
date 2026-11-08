@@ -1,0 +1,9 @@
+---
+argument_specs:
+  main:
+    short_description: iperf3 в режиме сервера под systemd
+    options:
+      iperf3_port:
+        type: int
+        required: true
+        description: Порт iperf3 (group_vars/all.yml).

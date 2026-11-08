@@ -1,0 +1,34 @@
+# Ansible
+*.retry
+.ansible/
+
+# Vault passwords
+.vault_pass
+.vault_pass*
+vault-password.txt
+
+# SSH private keys
+*.pem
+id_rsa
+id_ed25519
+ansible_ed25519
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Environment
+.env
+.env.*
+
+# Temporary files
+*.bak
+*.tmp
+*.swp
+*~
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

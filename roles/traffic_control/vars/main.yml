@@ -1,0 +1,17 @@
+---
+# Единственное описание команды tc: её используют drop-in (загрузка и рестарт
+# туннеля), handler и проверка дрейфа. Это внутренняя константа роли.
+traffic_control_tbf_argv:
+  - /usr/sbin/tc
+  - qdisc
+  - replace
+  - dev
+  - "{{ traffic_control_interface }}"
+  - root
+  - tbf
+  - rate
+  - "{{ traffic_control_rate }}"
+  - burst
+  - "{{ traffic_control_burst }}"
+  - latency
+  - "{{ traffic_control_latency }}"

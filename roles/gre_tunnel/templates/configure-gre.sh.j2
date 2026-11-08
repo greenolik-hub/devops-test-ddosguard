@@ -1,0 +1,27 @@
+#!/bin/bash
+# {{ ansible_managed }}
+set -euo pipefail
+
+IP=/usr/sbin/ip
+
+if $IP tunnel show {{ gre_interface }} >/dev/null 2>&1; then
+
+    $IP tunnel change {{ gre_interface }} \
+        mode gre \
+        local {{ gre_local_ip }} \
+        remote {{ gre_remote_ip }} \
+        ttl {{ gre_ttl }}
+
+else
+
+    $IP tunnel add {{ gre_interface }} \
+        mode gre \
+        local {{ gre_local_ip }} \
+        remote {{ gre_remote_ip }} \
+        ttl {{ gre_ttl }}
+
+fi
+
+$IP address replace {{ gre_tunnel_ip }}/{{ gre_prefix }} dev {{ gre_interface }}
+
+$IP link set {{ gre_interface }} mtu {{ gre_mtu }} up

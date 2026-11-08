@@ -1,0 +1,28 @@
+---
+argument_specs:
+  main:
+    short_description: Docker Engine и плагин Compose из официального репозитория Docker (Debian)
+    options:
+      docker_repo_url:
+        type: str
+        default: "https://download.docker.com/linux/debian"
+        description: Базовый URL репозитория Docker CE.
+      docker_gpg_url:
+        type: str
+        default: "https://download.docker.com/linux/debian/gpg"
+        description: URL ключа подписи репозитория.
+      docker_version:
+        type: str
+        default: "29.9.3"
+        description: Версия docker-ce и docker-ce-cli (без epoch и суффикса пакета).
+      docker_containerd_version:
+        type: str
+        default: "2.4.2"
+        description: Версия containerd.io.
+      docker_compose_plugin_version:
+        type: str
+        default: "5.7.0"
+        description: Версия docker-compose-plugin.
+      docker_apt_arch_map:
+        type: dict
+        description: Соответствие ansible_architecture и архитектуры APT.

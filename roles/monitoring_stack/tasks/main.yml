@@ -1,0 +1,96 @@
+---
+- name: Validate Grafana admin password
+  ansible.builtin.assert:
+    that:
+      - grafana_admin_password | length >= 12
+    fail_msg: >-
+      Задайте vault_grafana_admin_password (не короче 12 символов) в
+      host_vars/monitoring-01/vault.yml. См. README, раздел «Секреты».
+    quiet: true
+
+# Владельцы выставляются до запуска контейнеров: иначе при первом старте
+# Grafana (uid 472) не может писать в свой каталог данных.
+- name: Create monitoring directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.owner | default('root') }}"
+    mode: "0755"
+  loop:
+    - path: "{{ monitoring_data_dir }}"
+    - path: "{{ monitoring_data_dir }}/prometheus"
+    - path: "{{ monitoring_data_dir }}/prometheus/config"
+    - path: "{{ monitoring_data_dir }}/prometheus/data"
+      owner: "{{ prometheus_container_uid }}"
+    - path: "{{ monitoring_data_dir }}/grafana"
+      owner: "{{ grafana_container_uid }}"
+    - path: "{{ monitoring_data_dir }}/grafana-config"
+    - path: "{{ monitoring_data_dir }}/grafana-config/provisioning"
+    - path: "{{ monitoring_data_dir }}/grafana-config/provisioning/dashboards"
+    - path: "{{ monitoring_data_dir }}/grafana-config/provisioning/datasources"
+    - path: "{{ monitoring_data_dir }}/grafana-config/dashboards"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Deploy Prometheus configuration
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_data_dir }}/prometheus/config/prometheus.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart prometheus
+
+- name: Deploy Grafana provisioning
+  ansible.builtin.copy:
+    src: "grafana/provisioning/{{ item }}"
+    dest: "{{ monitoring_data_dir }}/grafana-config/provisioning/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - dashboards/dashboards.yml
+    - datasources/prometheus.yml
+  notify: Restart grafana
+
+# Дашборд — шаблон: имя туннельного интерфейса и линия лимита берутся из
+# переменных. Разделители << >> выбраны, чтобы не конфликтовать с {{host}}
+# в legendFormat Grafana. Grafana перечитывает файл сама
+# (updateIntervalSeconds в провайдере).
+- name: Deploy Grafana dashboard
+  ansible.builtin.template:
+    src: grafana/dashboards/node-overview.json.j2
+    dest: "{{ monitoring_data_dir }}/grafana-config/dashboards/node-overview.json"
+    owner: root
+    group: root
+    mode: "0644"
+    variable_start_string: "<<"
+    variable_end_string: ">>"
+
+- name: Deploy Grafana environment file
+  ansible.builtin.template:
+    src: grafana.env.j2
+    dest: "{{ monitoring_data_dir }}/grafana.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Deploy Docker Compose
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ monitoring_data_dir }}/compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+# Применяет изменения compose.yml и grafana.env (пересоздаёт затронутые
+# контейнеры), при отсутствии изменений ничего не делает.
+- name: Ensure monitoring stack is running
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_data_dir }}"
+    files:
+      - compose.yml
+    state: present
+    pull: missing

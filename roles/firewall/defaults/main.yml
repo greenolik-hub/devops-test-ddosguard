@@ -1,0 +1,17 @@
+---
+# Порт SSH, через который работает Ansible. Всегда разрешён.
+firewall_ssh_port: "{{ ansible_port | default(22) }}"
+
+# iperf3: TCP и UDP, с любого адреса — нужен и для теста через туннель,
+# и для прямого теста по LAN.
+firewall_iperf3_port: "{{ iperf3_port }}"
+
+# node_exporter: только с хостов мониторинга (ansible_host каждого хоста группы).
+firewall_node_exporter_port: "{{ node_exporter_port }}"
+firewall_monitoring_group: monitoring
+firewall_node_exporter_sources: >-
+  {{ groups[firewall_monitoring_group] | default([])
+     | map('extract', hostvars, 'ansible_host') | list }}
+
+# GRE (IP protocol 47): только от underlay-адреса другого конца туннеля.
+firewall_gre_peers: "{{ [gre_remote_ip] if gre_remote_ip is defined else [] }}"

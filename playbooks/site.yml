@@ -1,0 +1,26 @@
+---
+- name: Configure iperf servers
+  hosts: iperf_servers
+  become: true
+
+  roles:
+    - role: firewall
+      tags: [firewall]
+    - role: gre_tunnel
+      tags: [tunnel]
+    - role: traffic_control
+      tags: [tunnel, shaping]
+    - role: iperf
+      tags: [iperf]
+    - role: node_exporter
+      tags: [node_exporter, monitoring]
+
+- name: Configure monitoring server
+  hosts: monitoring
+  become: true
+
+  roles:
+    - role: docker
+      tags: [monitoring, docker]
+    - role: monitoring_stack
+      tags: [monitoring]

@@ -1,0 +1,28 @@
+---
+- name: Install nftables
+  ansible.builtin.apt:
+    name: nftables
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+# validate проверяет синтаксис до записи файла: битый конфиг не попадёт
+# в /etc/nftables.conf и не применится.
+- name: Deploy nftables ruleset
+  ansible.builtin.template:
+    src: nftables.conf.j2
+    dest: /etc/nftables.conf
+    owner: root
+    group: root
+    mode: "0755"
+    validate: /usr/sbin/nft -c -f %s
+  notify: Reload nftables
+
+- name: Enable and start nftables
+  ansible.builtin.systemd:
+    name: nftables.service
+    enabled: true
+    state: started
+
+- name: Apply pending firewall changes
+  ansible.builtin.meta: flush_handlers

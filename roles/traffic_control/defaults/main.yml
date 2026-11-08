@@ -1,0 +1,13 @@
+---
+# Интерфейс, на egress которого вешается TBF. По умолчанию — туннель из роли
+# gre_tunnel. traffic_control_rate задаётся в
+# inventory/production/group_vars/all.yml.
+traffic_control_interface: "{{ gre_interface }}"
+
+# systemd-юнит, который поднимает интерфейс. Шейпер привязывается к нему
+# drop-in'ом, поэтому переживает перезагрузку и рестарт туннеля.
+traffic_control_unit: gre-tunnel.service
+
+# Параметры TBF в синтаксисе tc. Обоснование burst — в README.
+traffic_control_burst: 64kb
+traffic_control_latency: 400ms

@@ -1,0 +1,24 @@
+---
+argument_specs:
+  main:
+    short_description: Ограничение полосы интерфейса через tc qdisc TBF, постоянное через systemd drop-in
+    options:
+      traffic_control_interface:
+        type: str
+        description: Интерфейс для TBF (по умолчанию gre_interface).
+      traffic_control_unit:
+        type: str
+        default: gre-tunnel.service
+        description: Юнит, к которому привязывается drop-in. Должен поднимать интерфейс.
+      traffic_control_rate:
+        type: str
+        required: true
+        description: Лимит в синтаксисе tc, например 10mbit (group_vars/all.yml).
+      traffic_control_burst:
+        type: str
+        default: 64kb
+        description: Размер burst TBF.
+      traffic_control_latency:
+        type: str
+        default: 400ms
+        description: Максимальная задержка в очереди TBF.

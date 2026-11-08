@@ -1,0 +1,50 @@
+# {{ ansible_managed }}
+services:
+
+  prometheus:
+    image: {{ prometheus_image }}
+    container_name: prometheus
+    restart: unless-stopped
+
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+
+    ports:
+      - "{{ prometheus_bind_address }}:{{ prometheus_port }}:9090"
+
+    volumes:
+      # Каталог, а не отдельный файл: template пишет файл атомарно (новый inode),
+      # и смонтированный по отдельности файл в контейнере бы не обновлялся.
+      - "{{ monitoring_data_dir }}/prometheus/config:/etc/prometheus:ro"
+      - "{{ monitoring_data_dir }}/prometheus/data:/prometheus"
+
+    networks:
+      - monitoring
+
+  grafana:
+    image: {{ grafana_image }}
+    container_name: grafana
+    restart: unless-stopped
+
+    env_file:
+      - grafana.env
+
+    ports:
+      - "{{ grafana_bind_address }}:{{ grafana_port }}:3000"
+
+    volumes:
+      - "{{ monitoring_data_dir }}/grafana:/var/lib/grafana"
+      - "{{ monitoring_data_dir }}/grafana-config/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro"
+      - "{{ monitoring_data_dir }}/grafana-config/provisioning/datasources:/etc/grafana/provisioning/datasources:ro"
+      - "{{ monitoring_data_dir }}/grafana-config/dashboards:/etc/grafana/dashboards:ro"
+
+    depends_on:
+      - prometheus
+
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge

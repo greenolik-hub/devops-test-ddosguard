@@ -1,0 +1,5 @@
+---
+- name: Restart iperf3
+  ansible.builtin.systemd:
+    name: iperf3-server.service
+    state: restarted

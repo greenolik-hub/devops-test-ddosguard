@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+# Применяет TBF каждый раз, когда {{ traffic_control_unit }} поднимает
+# {{ traffic_control_interface }}: при загрузке и при рестарте туннеля.
+[Service]
+ExecStartPost={{ traffic_control_tbf_argv | join(' ') }}

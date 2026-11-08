@@ -1,0 +1,23 @@
+---
+- name: Install iperf3
+  ansible.builtin.apt:
+    name: iperf3
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Deploy iperf3 systemd service
+  ansible.builtin.template:
+    src: iperf3-server.service.j2
+    dest: /etc/systemd/system/iperf3-server.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart iperf3
+
+- name: Enable and start iperf3
+  ansible.builtin.systemd:
+    name: iperf3-server.service
+    enabled: true
+    state: started
+    daemon_reload: true

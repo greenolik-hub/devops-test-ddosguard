@@ -1,0 +1,20 @@
+---
+# docker compose up (state: present) не перезапускает контейнер, если поменялся
+# только смонтированный конфиг, поэтому сервисы перезапускаются явно.
+- name: Restart prometheus
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_data_dir }}"
+    files:
+      - compose.yml
+    services:
+      - prometheus
+    state: restarted
+
+- name: Restart grafana
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_data_dir }}"
+    files:
+      - compose.yml
+    services:
+      - grafana
+    state: restarted

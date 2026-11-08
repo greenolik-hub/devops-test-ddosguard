@@ -1,0 +1,11 @@
+---
+profile: production
+
+exclude_paths:
+  - .ansible/
+
+skip_list:
+  # Переменные ролей названы по предметной области (gre_*, prometheus_*,
+  # grafana_*), а не по имени роли. Переименование ради правила затронуло бы
+  # inventory и документацию без практической пользы для проекта такого размера.
+  - var-naming[no-role-prefix]

@@ -1,0 +1,82 @@
+---
+# Формат проверяется здесь, до любых изменений на хосте: из значения также
+# считается линия лимита на дашборде Grafana (monitoring_stack).
+- name: Validate shaping rate
+  ansible.builtin.assert:
+    that:
+      - traffic_control_rate is match('^[0-9]+mbit$')
+    fail_msg: >-
+      traffic_control_rate должен быть в формате <число>mbit (например,
+      10mbit), получено: {{ traffic_control_rate }}.
+    quiet: true
+
+- name: Install iproute2
+  ansible.builtin.apt:
+    name: iproute2
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Read state of the shaped interface
+  ansible.builtin.command:
+    argv:
+      - /usr/sbin/ip
+      - link
+      - show
+      - dev
+      - "{{ traffic_control_interface }}"
+  register: traffic_control_link
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Ensure the shaped interface exists
+  ansible.builtin.assert:
+    that:
+      - traffic_control_link.rc == 0
+    fail_msg: >-
+      Интерфейс {{ traffic_control_interface }} не найден. Роль
+      traffic_control должна выполняться после gre_tunnel.
+    quiet: true
+  when: not ansible_check_mode
+
+- name: Create drop-in directory for {{ traffic_control_unit }}
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ traffic_control_unit }}.d"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# Делает шейпер постоянным: tc применяется при каждом старте юнита туннеля.
+# Изменение параметров приводит к немедленному применению через handler.
+- name: Deploy TBF systemd drop-in
+  ansible.builtin.template:
+    src: 10-tbf.conf.j2
+    dest: "/etc/systemd/system/{{ traffic_control_unit }}.d/10-tbf.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Apply TBF shaping
+
+# Защита от дрейфа: если TBF на интерфейсе нет (например, его сняли вручную),
+# задача помечается changed и уведомляет тот же handler, что и смена
+# параметров. Handler срабатывает один раз, даже если изменилось и то и другое.
+- name: Check that TBF is installed
+  ansible.builtin.command:
+    argv:
+      - /usr/sbin/tc
+      - qdisc
+      - show
+      - dev
+      - "{{ traffic_control_interface }}"
+  register: traffic_control_qdisc
+  changed_when: "'qdisc tbf' not in traffic_control_qdisc.stdout"
+  failed_when: false
+  check_mode: false
+  notify: Apply TBF shaping
+
+- name: Apply pending TBF changes
+  ansible.builtin.meta: flush_handlers

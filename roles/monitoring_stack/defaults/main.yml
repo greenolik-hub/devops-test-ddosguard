@@ -1,0 +1,36 @@
+---
+monitoring_data_dir: /opt/monitoring
+
+# Версии закреплены явно: тег latest делает развёртывание невоспроизводимым.
+prometheus_image: "prom/prometheus:v3.16.0"
+grafana_image: "grafana/grafana:13.3.0"
+
+prometheus_port: 9090
+# Prometheus наружу не публикуется: Grafana ходит к нему по сети Compose.
+# Для доступа с рабочей станции используйте SSH-туннель (см. README).
+prometheus_bind_address: 127.0.0.1
+grafana_port: 3000
+# Grafana слушает по HTTP, а firewall на этом хосте нет (роль firewall
+# несовместима с правилами Docker). По умолчанию доступна во всей сети;
+# чтобы закрыть от LAN, задайте 127.0.0.1 и ходите через SSH-туннель.
+grafana_bind_address: 0.0.0.0
+
+# Таргеты node_exporter генерируются из этой группы inventory
+# (адрес — ansible_host каждого хоста). Порт — node_exporter_port
+# из inventory/production/group_vars/all.yml.
+prometheus_node_exporter_group: iperf_servers
+
+# UID процессов внутри официальных образов.
+prometheus_container_uid: "65534"
+grafana_container_uid: "472"
+
+# Учётная запись администратора Grafana. Логин не секретен, пароль берётся
+# из Vault: vault_grafana_admin_password в
+# inventory/production/host_vars/monitoring-01/vault.yml. Без пароля роль
+# останавливается. Переменные применяются только при первой инициализации
+# базы Grafana (см. README).
+grafana_admin_user: grafana_admin
+grafana_admin_password: "{{ vault_grafana_admin_password | default('') }}"
+
+# Линия лимита на дашборде, бит/с: считается из traffic_control_rate.
+monitoring_tunnel_limit_bps: "{{ (traffic_control_rate | regex_replace('(?i)mbit$', '') | int) * 1000000 }}"

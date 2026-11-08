@@ -1,0 +1,45 @@
+---
+name: lint
+
+"on":
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Версии закреплены (проверены локально): новый релиз линтера не должен
+      # внезапно ломать сборку. Обновляйте их осознанно.
+      - name: Install tools
+        run: pip install ansible-core==2.15.13 ansible-lint==6.22.2 yamllint==1.37.1
+
+      - name: Install collections
+        run: ansible-galaxy collection install -r requirements.yml
+
+      # В репозитории vault.yml зашифрованы, пароля в CI нет. Подставляем
+      # фиктивные значения только внутри этой сборки, чтобы Ansible мог
+      # прочитать inventory. Реальные секреты в CI не используются.
+      - name: Stub vault files
+        run: |
+          for f in inventory/production/host_vars/*/vault.yml; do
+            printf 'vault_grafana_admin_password: "ci-stub-password-0000"\n' > "$f"
+          done
+
+      - name: yamllint
+        run: yamllint -s .
+
+      - name: ansible-lint
+        run: ansible-lint
+
+      - name: Syntax check
+        run: ansible-playbook playbooks/site.yml --syntax-check

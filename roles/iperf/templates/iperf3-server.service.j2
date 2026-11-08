@@ -1,0 +1,26 @@
+# {{ ansible_managed }}
+[Unit]
+Description=iperf3 Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+ExecStart=/usr/bin/iperf3 --server --port {{ iperf3_port }}
+
+Restart=on-failure
+RestartSec=3
+
+# iperf3 не нужны права root: порт непривилегированный, запись — только во
+# временный файл. DynamicUser= запускает сервис от временного пользователя и
+# включает PrivateTmp, ProtectSystem=strict и ProtectHome=read-only.
+DynamicUser=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+[Install]
+WantedBy=multi-user.target

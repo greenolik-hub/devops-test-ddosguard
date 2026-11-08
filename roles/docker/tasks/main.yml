@@ -1,0 +1,52 @@
+---
+- name: Install Docker prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create APT keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download Docker GPG key
+  ansible.builtin.get_url:
+    url: "{{ docker_gpg_url }}"
+    dest: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add official Docker repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ docker_apt_arch_map[ansible_facts['architecture']]
+      | default(ansible_facts['architecture']) }}
+      signed-by=/etc/apt/keyrings/docker.asc]
+      {{ docker_repo_url }}
+      {{ ansible_facts['distribution_release'] }} stable
+    filename: docker
+    state: present
+    update_cache: true
+
+- name: Install Docker Engine and Compose
+  ansible.builtin.apt:
+    name:
+      - "docker-ce=5:{{ docker_version }}-*"
+      - "docker-ce-cli=5:{{ docker_version }}-*"
+      - "containerd.io={{ docker_containerd_version }}-*"
+      - "docker-compose-plugin={{ docker_compose_plugin_version }}-*"
+    state: present
+    allow_downgrade: true
+
+- name: Ensure Docker is enabled and running
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started

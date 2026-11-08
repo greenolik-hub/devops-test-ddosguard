@@ -1,0 +1,10 @@
+---
+# Порядок важен: handlers выполняются в порядке объявления.
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Apply TBF shaping
+  ansible.builtin.command:
+    argv: "{{ traffic_control_tbf_argv }}"
+  changed_when: true

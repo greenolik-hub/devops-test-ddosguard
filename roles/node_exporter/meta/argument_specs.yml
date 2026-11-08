@@ -1,0 +1,9 @@
+---
+argument_specs:
+  main:
+    short_description: prometheus-node-exporter из репозитория Debian
+    options:
+      node_exporter_port:
+        type: int
+        required: true
+        description: Порт метрик (group_vars/all.yml). Применяется через ARGS в /etc/default/prometheus-node-exporter.

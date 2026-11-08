@@ -1,0 +1,41 @@
+---
+argument_specs:
+  main:
+    short_description: nftables на узлах туннеля — политика drop на входе, разрешения по списку
+    options:
+      # Общие параметры стенда: роль открывает эти порты, значения приходят из
+      # inventory/production/group_vars/all.yml.
+      iperf3_port:
+        type: int
+        required: true
+        description: Порт iperf3, который открывается в firewall (group_vars/all.yml).
+      node_exporter_port:
+        type: int
+        required: true
+        description: Порт node_exporter, который открывается хостам мониторинга (group_vars/all.yml).
+
+      firewall_ssh_port:
+        type: int
+        description: Порт SSH, разрешён всегда (по умолчанию ansible_port, иначе 22).
+      firewall_iperf3_port:
+        type: int
+        description: Порт iperf3 в правилах (по умолчанию iperf3_port).
+      firewall_node_exporter_port:
+        type: int
+        description: Порт node_exporter в правилах (по умолчанию node_exporter_port).
+      firewall_monitoring_group:
+        type: str
+        default: monitoring
+        description: Группа inventory, хостам которой открыт node_exporter.
+      firewall_node_exporter_sources:
+        type: list
+        elements: str
+        description: >-
+          Адреса, которым открыт node_exporter (по умолчанию ansible_host
+          каждого хоста группы firewall_monitoring_group).
+      firewall_gre_peers:
+        type: list
+        elements: str
+        description: >-
+          Адреса, с которых принимается GRE (по умолчанию gre_remote_ip, если
+          он задан для хоста; иначе правило для GRE не добавляется).

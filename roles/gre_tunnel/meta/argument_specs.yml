@@ -1,0 +1,33 @@
+---
+argument_specs:
+  main:
+    short_description: GRE-туннель между двумя Linux-хостами с автозапуском через systemd
+    options:
+      gre_interface:
+        type: str
+        required: true
+        description: Имя туннельного интерфейса (group_vars/all.yml).
+      gre_local_ip:
+        type: str
+        required: true
+        description: Свой адрес в underlay-сети (inventory, для каждого хоста).
+      gre_remote_ip:
+        type: str
+        required: true
+        description: Адрес второго конца туннеля в underlay-сети (inventory).
+      gre_tunnel_ip:
+        type: str
+        required: true
+        description: Адрес внутри туннеля (inventory).
+      gre_prefix:
+        type: int
+        default: 30
+        description: Длина префикса адреса туннеля.
+      gre_ttl:
+        type: int
+        default: 255
+        description: TTL внешних пакетов.
+      gre_mtu:
+        type: int
+        default: 1476
+        description: MTU туннеля (MTU underlay минус 24 байта заголовков).

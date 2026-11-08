@@ -1,0 +1,16 @@
+---
+# Репозиторий Docker CE.
+docker_repo_url: "https://download.docker.com/linux/debian"
+docker_gpg_url: "https://download.docker.com/linux/debian/gpg"
+# Версии пакетов закреплены: без этого apt ставит самую свежую из канала
+# stable, и развёртывание зависит от дня запуска. Версии сверены с
+# репозиторием Debian 13 (trixie). Для обновления смените значение и
+# запустите роль: понижение версии разрешено (allow_downgrade).
+docker_version: "29.9.3"
+docker_containerd_version: "2.4.2"
+docker_compose_plugin_version: "5.7.0"
+
+docker_apt_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+  armv7l: armhf
